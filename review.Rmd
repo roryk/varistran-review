@@ -1,0 +1,72 @@
+
+# Installation works great
+
+```{r installation}
+install.packages("devtools")
+devtools::install_github("MonashBioinformaticsPlatform/varistran")
+```
+
+# Testing
+
+Would be nice if in main description on the github page, the bottomly dataset
+or one of the other test datasets was shown as setup as a test set.
+I only discovered some test datasets by looking at the tests.
+
+NBPSeq isn't mentioned as a dependency anywhere, but is required to run the
+*vst_stability_plots.R* test.
+
+Testing of the bottomly dataset in *vst_stability_plots.R* fails:
+
+```
+Bottomly
+
+Error in validObject(.Object) :
+  invalid class “DESeqDataSet” object: levels of factors in the design contain characters other than letters, numbers, '_' and '.'
+```
+
+I fixed this in a pull request and it seems to work fine. The rest of the
+tests passed fine.
+
+# Test on non-included dataset
+Here we test on a dataset that wasn't included in the tests by generating
+a fake example dataset and running it through.
+
+```{r test-data}
+library(DESeq2)
+dds = makeExampleDESeqDataSet(n = 20000, m = 12, betaSD = 0, interceptMean = 4,
+                              interceptSD = 2, dispMeanRel = function(x) 4/x + 0.1)
+counts = counts(dds, normalized=FALSE)
+condition = c(rep("A", 6), rep("B", 6))
+design = model.matrix(~condition)
+```
+
+```{r varistran-vst}
+y <- varistran::vst(counts, design=design)
+print(varistran::vst_advice(y))
+```
+```{r stability-plot}
+varistran::plot_stability(y, counts, design=design)
+```
+
+```{r plot-biplot}
+varistran::plot_biplot(y)
+```
+
+Would be nice if the plot_heatmap function subset the variable genes so it
+did not plot the whole thing by default.
+
+```{r plot-heatmap}
+varistran::plot_heatmap(y[1:20,])
+```
+
+# Further testing
+
+```
+R CMD check fails:
+
+* using session charset: UTF-8
+* checking for file ‘./DESCRIPTION’ ... ERROR
+Required field missing or empty:
+  ‘Author’
+* DONE
+```
